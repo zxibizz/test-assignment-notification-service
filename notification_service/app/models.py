@@ -1,6 +1,7 @@
 from collections import OrderedDict
 
 import pytz
+from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import Count, QuerySet
 
@@ -33,7 +34,19 @@ class Mailing(models.Model):
 
 
 class Client(models.Model):
-    phone_number = models.CharField(max_length=10)
+    phone_number = models.CharField(
+        max_length=11,
+        validators=[
+            RegexValidator(
+                regex="^7[0-9]{10}$",
+                message=(
+                    "Phone number is invalid! "
+                    "It should follow the pattern '7XXXXXXXXXX' "
+                    "where X is a digit between 0 and 9"
+                ),
+            ),
+        ],
+    )
     mobile_operator_code = models.CharField(max_length=3)
     tag = models.CharField(max_length=50)
     timezone = models.CharField(max_length=32, choices=TIMEZONES, default="UTC")
