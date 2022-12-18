@@ -22,11 +22,13 @@ class MailingSerializer(ModelSerializer):
         fields = [
             "id",
             "start_at",
+            "started_at",
             "finish_at",
             "content",
             "mobile_operator_code",
             "tag",
         ]
+        read_only_fields = ["started_at"]
 
 
 class MessageSerializer(ModelSerializer):

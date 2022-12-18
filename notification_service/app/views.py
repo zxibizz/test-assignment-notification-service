@@ -1,6 +1,3 @@
-import datetime
-
-from django.utils import timezone
 from drf_spectacular.utils import extend_schema
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -14,7 +11,6 @@ from .serializers import (
     MailingStatsSerializer,
     MessageSerializer,
 )
-from .tasks import start_mailing
 
 
 class ClientViewSet(viewsets.ModelViewSet):
@@ -25,14 +21,6 @@ class ClientViewSet(viewsets.ModelViewSet):
 class MailingViewSet(viewsets.ModelViewSet):
     queryset = Mailing.objects.all()
     serializer_class = MailingSerializer
-
-    def perform_create(self, serializer: MailingSerializer):
-        if (
-            serializer.start_at
-            <= timezone.now()
-            < (serializer.finish_at or datetime.MAXYEAR)
-        ):
-            start_mailing.delay(serializer.id)
 
     @extend_schema(responses=MailingsStatsSerializer(many=False))
     @action(detail=False, methods=["get"])
