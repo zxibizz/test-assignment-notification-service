@@ -308,7 +308,7 @@ SOCIALACCOUNT_FORMS = {
 # django-rest-framework - https://www.django-rest-framework.org/api-guide/settings/
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [],
-    "DEFAULT_PERMISSION_CLASSES": [],
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.AllowAny",),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
@@ -321,7 +321,7 @@ SPECTACULAR_SETTINGS = {
     "TITLE": "Notification Service API",
     "DESCRIPTION": "Documentation of API endpoints of Notification Service",
     "VERSION": "1.0.0",
-    "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAdminUser"],
+    "SERVE_PERMISSIONS": [],
 }
 
 # Project logic specific settings
