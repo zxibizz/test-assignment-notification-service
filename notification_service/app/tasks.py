@@ -3,7 +3,7 @@ from datetime import datetime
 
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import F, Q
 from django.utils import timezone
 
 from config import celery_app
@@ -68,36 +68,44 @@ def send_upcoming_messages():
     now = timezone.now()
     cancel_overdue_messages(now)
 
-    messages = Message.objects.filter(
-        status__in=[
-            Message.Status.PENDING,
-            Message.Status.FAILED,
-        ],
-    ).select_related("client", "mailing")
+    while True:
+        messages = Message.objects.filter(
+            status__in=[
+                Message.Status.PENDING,
+                Message.Status.FAILED,
+            ],
+        ).annotate(
+            client_phone_number=F("client__phone_number"),
+            mailing_content=F("mailing__content"),
+        )[
+            :200
+        ]
+        if not messages:
+            break
 
-    mailing_messages = [
-        MailingMessage(
-            msg_id=message.id,
-            phone=message.client.phone_number,
-            text=message.mailing.content,
-        )
-        for message in messages
-    ]
-    if not mailing_messages:
-        return
-
-    asyncio.run(mailing_client.post_message_batch(mailing_messages))
-
-    update_messages = []
-    for mailing_message in mailing_messages:
-        update_messages.append(
-            Message(
-                id=mailing_message.msg_id,
-                status=Message.Status.SUCCEED
-                if mailing_message.status == MailingMessageStatus.SUCCEED
-                else Message.Status.FAILED,
-                sent_at=now,
+        mailing_messages = [
+            MailingMessage(
+                msg_id=message.id,
+                phone=message.client_phone_number,
+                text=message.mailing_content,
             )
-        )
-    if update_messages:
-        Message.objects.bulk_update(update_messages, ["status", "sent_at"])
+            for message in messages
+        ]
+        if not mailing_messages:
+            return
+
+        asyncio.run(mailing_client.post_message_batch(mailing_messages))
+
+        update_messages = []
+        for mailing_message in mailing_messages:
+            update_messages.append(
+                Message(
+                    id=mailing_message.msg_id,
+                    status=Message.Status.SUCCEED
+                    if mailing_message.status == MailingMessageStatus.SUCCEED
+                    else Message.Status.FAILED,
+                    sent_at=now,
+                )
+            )
+        if update_messages:
+            Message.objects.bulk_update(update_messages, ["status", "sent_at"])
