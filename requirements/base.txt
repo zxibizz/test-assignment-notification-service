@@ -9,6 +9,8 @@ celery==5.2.7  # pyup: < 6.0  # https://github.com/celery/celery
 django-celery-beat==2.4.0  # https://github.com/celery/django-celery-beat
 flower==1.2.0  # https://github.com/mher/flower
 uvicorn[standard]==0.20.0  # https://github.com/encode/uvicorn
+httpx # https://github.com/encode/httpx/
+aiolimiter # https://github.com/mjpieters/aiolimiter
 
 # Django
 # ------------------------------------------------------------------------------

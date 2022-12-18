@@ -326,5 +326,6 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.0.0",
     "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAdminUser"],
 }
-# Your stuff...
-# ------------------------------------------------------------------------------
+
+# Project logic specific settings
+MAILING_SERVICE_TOKEN = env("MAILING_SERVICE_TOKEN", default="")

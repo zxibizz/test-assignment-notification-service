@@ -6,10 +6,11 @@ TIMEZONES = tuple(zip(pytz.all_timezones, pytz.all_timezones))
 
 class Mailing(models.Model):
     start_at = models.DateTimeField(blank=False, null=False)
-    finish_at = models.DateTimeField(blank=True)
+    started_at = models.DateTimeField(blank=True, null=True)
+    finish_at = models.DateTimeField(blank=True, null=True)
     content = models.TextField(null=False)
-    mobile_operator_code = models.CharField(max_length=3)
-    tag = models.CharField(max_length=50)
+    mobile_operator_code = models.CharField(max_length=3, null=True)
+    tag = models.CharField(max_length=50, null=True)
 
 
 class Client(models.Model):
@@ -24,8 +25,9 @@ class Message(models.Model):
         PENDING = "Pending"
         SUCCEED = "Succeed"
         FAILED = "Failed"
+        CANCELED = "Canceled"
 
-    created_at = models.DateTimeField(auto_created=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     sent_at = models.DateTimeField(null=True, blank=True)
     status = models.TextField(choices=Status.choices)
     mailing = models.ForeignKey(Mailing, on_delete=models.PROTECT)

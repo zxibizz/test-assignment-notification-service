@@ -29,5 +29,5 @@ EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 # ------------------------------------------------------------------------------
 TEMPLATES[0]["OPTIONS"]["debug"] = True  # type: ignore # noqa F405
 
-# Your stuff...
-# ------------------------------------------------------------------------------
+# Project logic specific settings
+MAILING_SERVICE_TOKEN = "MAILING_SERVICE_TOKEN"
