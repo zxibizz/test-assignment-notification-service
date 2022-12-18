@@ -1,7 +1,24 @@
+from collections import OrderedDict
+
 import pytz
 from django.db import models
+from django.db.models import Count, QuerySet
 
 TIMEZONES = tuple(zip(pytz.all_timezones, pytz.all_timezones))
+
+
+class MailingQuerySet(QuerySet):
+    def stats(self) -> dict["Message.Status", int]:
+        stats_qs = (
+            Message.objects.filter(mailing__in=self)
+            .values("status")
+            .annotate(count=Count("status"))
+        )
+        result = OrderedDict([(val, 0) for val in Message.Status.values])
+        for stat in stats_qs:
+            result[stat["status"]] = stat["count"]
+
+        return result
 
 
 class Mailing(models.Model):
@@ -11,6 +28,8 @@ class Mailing(models.Model):
     content = models.TextField(null=False)
     mobile_operator_code = models.CharField(max_length=3, null=True)
     tag = models.CharField(max_length=50, null=True)
+
+    objects = MailingQuerySet.as_manager()
 
 
 class Client(models.Model):
