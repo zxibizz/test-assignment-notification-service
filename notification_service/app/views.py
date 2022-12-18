@@ -32,7 +32,7 @@ class MailingViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @extend_schema(responses=MailingStatsSerializer(many=False))
-    @action(detail=True, methods=["get"])
+    @action(detail=True, methods=["get"], url_path="stats")
     def detail_stats(self, request, pk):
         serializer = MailingStatsSerializer(
             {"message_statuses": self.get_queryset().filter(id=pk).stats()}
