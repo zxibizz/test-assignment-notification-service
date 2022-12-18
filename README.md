@@ -9,35 +9,85 @@ License: MIT
 
 ## Settings
 
+### General
+
 Moved to [settings](http://cookiecutter-django.readthedocs.io/en/latest/settings.html).
+
+### Specific
+
+- `MAILING_SERVICE_TOKEN` - authorization token of the mailing service
+
+## Running in Docker locally
+
+### Build
+
+This can take a while, especially the first time you run this particular command on your development system:
+
+    $ docker-compose -f local.yml build
+
+Generally, if you want to emulate production environment use production.yml instead. And this is true for any other actions you might need to perform: whenever a switch is required, just do it!
+
+Before doing any git commit, pre-commit should be installed globally on your local machine, and then:
+
+    $ pre-commit install
+
+Failing to do so will result with a bunch of CI and Linter errors that can be avoided with pre-commit.
+
+### Run
+
+This brings up both Django and PostgreSQL. The first time it is run it might take a while to get started, but subsequent runs will occur quickly.
+
+Open a terminal at the project root and run the following for local development:
+
+    $ docker-compose -f local.yml up
+
+You can also set the environment variable COMPOSE_FILE pointing to local.yml like this:
+
+    $ export COMPOSE_FILE=local.yml
+
+And then run:
+
+    $ docker-compose up
+
+To run in a detached (background) mode, just:
+
+    $ docker-compose up -d
+
+Here, django is the target service we are executing the commands against.
+
+In the local environment running the container automatically triggers the database migrations to be applied.
+But the task schedules creating command is something you should run manually.
+Without doing this the scheduling logic will now work properly.
 
 ## Basic Commands
 
-### Setting Up Your Users
+As with any shell command that we wish to run in our container, this is done using the
 
--   To create a **normal user account**, just go to Sign Up and fill out the form. Once you submit it, you'll see a "Verify Your E-mail Address" page. Go to your console to see a simulated email verification message. Copy the link into your browser. Now the user's email should be verified and ready to go.
+    $ docker-compose -f local.yml run --rm <command>
 
--   To create a **superuser account**, use this command:
+### Updating database schema
 
-        $ python manage.py createsuperuser
+    $ python manage.py migrate
 
-For convenience, you can keep your normal user logged in on Chrome and your superuser logged in on Firefox (or similar), so that you can see how the site behaves for both kinds of users.
+### Creating a superuser
+
+    $ python manage.py createsuperuser
 
 ### Creating default task schedules
 
--   To create predefined task schedules, use this command:
+To create the predefined task schedules, use this command:
 
-        $ python manage.py create_periodic_tasks
+    $ python manage.py create_periodic_tasks
 
-    Keep in mind that **the execution of the command above will remove all the existing periodic tasks** if there are some.
+Keep in mind that **the execution of the command above will remove all the existing periodic tasks** if there are some.
 
-    The following tasks will be created:
+The following tasks will be created:
 
-    - "Start upcoming mailings" - creates messages for all the currently upcoming mailings.
-    By default, scheduled to be executed every 10 seconds.
-    - "Send upcoming messages" - set the status of all the outdated messages to 'CANCELED';
-    posts all the actual messages in 'PENDING' and 'FAILED' statues to the mailing service.
-    By default, scheduled to be executed every 10 seconds.
+- "Start upcoming mailings" - creates messages for all the currently upcoming mailings.
+By default, scheduled to be executed every 10 seconds.
+- "Send upcoming messages" - set the status of all the outdated messages to 'CANCELED';
+posts all the actual messages in 'PENDING' and 'FAILED' statues to the mailing service.
+By default, scheduled to be executed every 10 seconds.
 
 ### Type checks
 
@@ -57,10 +107,6 @@ To run the tests, check your test coverage, and generate an HTML coverage report
 
     $ pytest
 
-### Live reloading and Sass CSS compilation
-
-Moved to [Live reloading and SASS compilation](https://cookiecutter-django.readthedocs.io/en/latest/developing-locally.html#sass-compilation-live-reloading).
-
 ### Celery
 
 This app comes with Celery.
@@ -73,13 +119,6 @@ celery -A config.celery_app worker -l info
 ```
 
 Please note: For Celery's import magic to work, it is important *where* the celery commands are run. If you are in the same folder with *manage.py*, you should be right.
-
-### Sentry
-
-Sentry is an error logging aggregator service. You can sign up for a free account at <https://sentry.io/signup/?code=cookiecutter> or download and host it yourself.
-The system is set up with reasonable defaults, including 404 logging and integration with the WSGI application.
-
-You must set the DSN url in production.
 
 ## Deployment
 
