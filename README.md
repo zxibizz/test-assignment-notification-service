@@ -23,6 +23,22 @@ Moved to [settings](http://cookiecutter-django.readthedocs.io/en/latest/settings
 
 For convenience, you can keep your normal user logged in on Chrome and your superuser logged in on Firefox (or similar), so that you can see how the site behaves for both kinds of users.
 
+### Creating default task schedules
+
+-   To create predefined task schedules, use this command:
+
+        $ python manage.py create_periodic_tasks
+
+    Keep in mind that **the execution of the command above will remove all the existing periodic tasks** if there are some.
+
+    The following tasks will be created:
+
+    - "Start upcoming mailings" - creates messages for all the currently upcoming mailings.
+    By default, scheduled to be executed every 10 seconds.
+    - "Send upcoming messages" - set the status of all the outdated messages to 'CANCELED';
+    posts all the actual messages in 'PENDING' and 'FAILED' statues to the mailing service.
+    By default, scheduled to be executed every 10 seconds.
+
 ### Type checks
 
 Running type checks with mypy:
