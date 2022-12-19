@@ -5,6 +5,7 @@ from django.conf import settings
 from django.db import transaction
 from django.db.models import F, Q
 from django.utils import timezone
+from more_itertools import batched
 
 from config import celery_app
 from notification_service.utils.mailing_client import (
@@ -68,21 +69,23 @@ def send_upcoming_messages():
     now = timezone.now()
     cancel_overdue_messages(now)
 
-    while True:
-        messages = Message.objects.filter(
-            status__in=[
-                Message.Status.PENDING,
-                Message.Status.FAILED,
-            ],
-        ).annotate(
+    messages_qs = Message.objects.filter(
+        status__in=[
+            Message.Status.PENDING,
+            Message.Status.FAILED,
+        ],
+    )
+
+    if not messages_qs.count():
+        return
+
+    for messages in batched(
+        messages_qs.annotate(
             client_phone_number=F("client__phone_number"),
             mailing_content=F("mailing__content"),
-        )[
-            :200
-        ]
-        if not messages:
-            break
-
+        ).iterator(chunk_size=200),
+        200,
+    ):
         mailing_messages = [
             MailingMessage(
                 msg_id=message.id,

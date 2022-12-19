@@ -11,6 +11,7 @@ flower==1.2.0  # https://github.com/mher/flower
 uvicorn[standard]==0.20.0  # https://github.com/encode/uvicorn
 httpx # https://github.com/encode/httpx/
 aiolimiter # https://github.com/mjpieters/aiolimiter
+more-itertools # https://github.com/more-itertools/more-itertools
 
 # Django
 # ------------------------------------------------------------------------------
