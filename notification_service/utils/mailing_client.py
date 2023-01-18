@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from collections.abc import Iterable
 from contextlib import asynccontextmanager
 from enum import Enum
 
@@ -129,6 +130,6 @@ class MailingClient:
 
         return message
 
-    async def post_message_batch(self, messages: list[MailingMessage]):
+    async def post_message_batch(self, messages: Iterable[MailingMessage]):
         async with self.session():
             await asyncio.gather(*[self.post_message(message) for message in messages])
