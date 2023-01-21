@@ -1,58 +1,74 @@
 from datetime import datetime, timedelta
-from unittest.mock import patch
+from unittest.mock import Mock
 
 import pytest
 from django.utils import timezone
-from freezegun import freeze_time
 
-from ..models import Mailing, Message
-from ..tasks import send_upcoming_messages, start_mailing, start_upcoming_mailings
-from .factories import ClientFactory, MailingFactory, MessageFactory
-from .mocks import TestMailingClient
+from notification_service.app.models import Mailing, Message
+from notification_service.app.services import (
+    MailingStarterCallable,
+    MailingStarterService,
+    UpcomingMailingsStarterService,
+    UpcomingMessagesSenderService,
+)
+from notification_service.app.tests.factories import (
+    ClientFactory,
+    MailingFactory,
+    MessageFactory,
+)
+from notification_service.app.tests.mocks import TestMailingClient
 
 pytestmark = pytest.mark.django_db
 
+NOW = timezone.make_aware(datetime(2022, 1, 1))
+MONTH = timedelta(days=30)
 
-def test_start_upcoming_mailings(settings):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    now = datetime(2022, 2, 1)
+
+def _get_time_awared_now():
+    return NOW
+
+
+def test_upcoming_mailings_starter_service(settings):
+    mock_mailing_starter = Mock(spec=MailingStarterCallable)
 
     expected_mailings_ids = [
-        MailingFactory(start_at=datetime(2022, 1, 1)).id,
-        MailingFactory(
-            start_at=datetime(2022, 1, 1), finish_at=datetime(2022, 3, 1)
-        ).id,
+        MailingFactory(start_at=NOW - MONTH).id,
+        MailingFactory(start_at=NOW - MONTH, finish_at=NOW + MONTH).id,
     ]
-    MailingFactory(start_at=datetime(2022, 4, 1))
-    MailingFactory(start_at=datetime(2022, 1, 1), finish_at=datetime(2022, 1, 15))
+    MailingFactory(start_at=NOW + MONTH)
+    MailingFactory(start_at=NOW - MONTH * 2, finish_at=NOW - MONTH)
 
-    with freeze_time(now), patch(
-        "notification_service.app.tasks.start_mailing.delay"
-    ) as mock_start_mailing:
-        start_upcoming_mailings()
+    upcoming_mailings_starter = UpcomingMailingsStarterService(
+        mock_mailing_starter, _get_time_awared_now
+    )
+    upcoming_mailings_starter.execute()
 
     assert [
-        call_args[0][0] for call_args in mock_start_mailing.call_args_list
+        call_args[0][0] for call_args in mock_mailing_starter.call_args_list
     ] == expected_mailings_ids
 
 
-def test_start_mailing_ignores_already_handled_mailing():
+def test_mailing_starter_service_ignores_already_handled_mailing():
+    now = datetime(2022, 1, 1)
+    mailing_starter = MailingStarterService(lambda: now)
+
     ClientFactory(
         tag="tag",
         mobile_operator_code="123",
     )
     mailing_id = MailingFactory(
-        started_at=datetime(2022, 1, 1),
+        started_at=now - MONTH,
         tag="tag",
         mobile_operator_code="123",
     ).id
-    start_mailing(mailing_id)
+
+    mailing_starter.execute(mailing_id)
     assert not Message.objects.count()
 
 
 @pytest.mark.parametrize("is_empty_tag", [True, False])
 @pytest.mark.parametrize("is_empty_mobile_operator_code", [True, False])
-def test_start_mailing_filters(is_empty_tag, is_empty_mobile_operator_code):
+def test_mailing_starter_service(is_empty_tag, is_empty_mobile_operator_code):
     target_tag = "some_tag"
     target_mobile_operator_code = "123"
     for tag in (target_tag, "another_tag"):
@@ -63,15 +79,14 @@ def test_start_mailing_filters(is_empty_tag, is_empty_mobile_operator_code):
             )
     ClientFactory(tag="completely_another_tag", mobile_operator_code="987")
     mailing_id = MailingFactory(
-        start_at=datetime(2022, 1, 1),
+        start_at=NOW - MONTH,
         tag=None if is_empty_tag else target_tag,
         mobile_operator_code=None
         if is_empty_mobile_operator_code
         else target_mobile_operator_code,
     ).id
-    now = datetime(2022, 1, 2)
-    with freeze_time(now):
-        start_mailing(mailing_id)
+    mailing_starter = MailingStarterService(lambda: NOW)
+    mailing_starter.execute(mailing_id)
 
     created_messages = Message.objects.filter(
         mailing_id=mailing_id,
@@ -84,23 +99,18 @@ def test_start_mailing_filters(is_empty_tag, is_empty_mobile_operator_code):
             assert message.client.mobile_operator_code == target_mobile_operator_code
         assert created_messages[0].status == Message.Status.PENDING
 
-    assert Mailing.objects.get(id=mailing_id).started_at == timezone.make_aware(now)
+    assert Mailing.objects.get(id=mailing_id).started_at == NOW
 
 
-def test_send_upcoming_messages():
-    now = datetime(2022, 2, 1)
+def test_upcoming_messages_sender_service():
     overdue_message = MessageFactory(
-        mailing=MailingFactory(
-            start_at=now - timedelta(days=20),
-            finish_at=now - timedelta(days=10),
-        )
+        mailing=MailingFactory(start_at=NOW - MONTH * 2, finish_at=NOW - MONTH)
     )
     due_mailing_with_finish_date = MailingFactory(
-        start_at=now - timedelta(days=20),
-        finish_at=now + timedelta(days=10),
+        start_at=NOW - MONTH, finish_at=NOW + MONTH
     )
     due_mailing_with_no_finish_date = MailingFactory(
-        start_at=now - timedelta(days=20), finish_at=None
+        start_at=NOW - MONTH, finish_at=None
     )
     due_messages = [
         MessageFactory(mailing=due_mailing_with_finish_date),
@@ -108,10 +118,11 @@ def test_send_upcoming_messages():
     ]
 
     test_mailing_client = TestMailingClient()
-    with freeze_time(now), patch(
-        "notification_service.app.tasks.MailingClient", return_value=test_mailing_client
-    ):
-        send_upcoming_messages()
+
+    upcoming_messages_sender = UpcomingMessagesSenderService(
+        test_mailing_client, _get_time_awared_now
+    )
+    upcoming_messages_sender.execute()
 
     overdue_message.refresh_from_db()
     assert overdue_message.status == Message.Status.CANCELED

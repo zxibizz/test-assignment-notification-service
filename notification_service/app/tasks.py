@@ -7,7 +7,7 @@ from notification_service.utils.mailing_client import MailingClient
 from .services import (
     MailingStarterService,
     UpcomingMailingsStarterService,
-    UpcomingMessagesSender,
+    UpcomingMessagesSenderService,
 )
 
 
@@ -29,7 +29,7 @@ def start_mailing(mailing_id: int):
 @celery_app.task()
 def send_upcoming_messages():
     mailing_client = MailingClient(token=settings.MAILING_SERVICE_TOKEN)
-    upcoming_messages_sender = UpcomingMessagesSender(
+    upcoming_messages_sender = UpcomingMessagesSenderService(
         mailing_client=mailing_client, get_current_datetime=timezone.now
     )
     upcoming_messages_sender.execute()

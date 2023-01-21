@@ -92,7 +92,7 @@ class MailingStarterService(BaseService):
         mailing.save()
 
 
-class UpcomingMessagesSender(BaseService):
+class UpcomingMessagesSenderService(BaseService):
     def __init__(
         self,
         mailing_client: MailingClient,
