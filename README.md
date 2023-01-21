@@ -1,6 +1,8 @@
 # Notification Service
 
-Behold My Awesome Project!
+The service allows to schedule mailing lists and automatically sends them out when the time comes.
+
+This is my solution for the test assignment I haven't even got a feedback on...
 
 [![Built with Cookiecutter Django](https://img.shields.io/badge/built%20with-Cookiecutter%20Django-ff69b4.svg?logo=cookiecutter)](https://github.com/cookiecutter/cookiecutter-django/)
 [![Black code style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
@@ -127,43 +129,3 @@ The following details how to deploy this application.
 ### Docker
 
 See detailed [cookiecutter-django Docker documentation](http://cookiecutter-django.readthedocs.io/en/latest/deployment-with-docker.html).
-
-## Пояснительная записка
-
-В данном проекте реализованы следующие основные требования тестового задания:
-
-- [x] Выполненное задание необходимо разместить в публичном репозитории на gitlab.com
-- [x] Понятная документация по запуску проекта со всеми его зависимостями (в данном случае все устанавливается в докере само)
-- [ ] Документация по API для интеграции с разработанным сервисом
-(если честно этот пункт озадачил, т.к. не совсем уверен в каком виде это нужно помимо swagger. Буду рад если в фидбеке
-поясните что именно ожидалось в данном пункте)
-- [x] Описание реализованных методов в формате OpenAPI
-
-Также выполнены следующие дополнительные задания:
-- организовать тестирование написанного кода (тестирование не 100%, но постарался покрыть ключевую логику)
-- обеспечить автоматическую сборку/тестирование с помощью GitLab CI
-- подготовить docker-compose для запуска всех сервисов проекта одной командой
-- сделать так, чтобы по адресу /docs/ открывалась страница со Swagger UI
-- повторная отправка сообщения в случае неудачи
-
-За основу проекта я взял cookiecutter-django, который дал мне в коробке
-множество приятных фич, которые не пришлось настраивать самостоятельно, например:
-- docker и docker-compose для local и production окружений
-- gitlab-ci
-- flake8 линтинг
-- автосетап rest framework + drf spectacular + allauth + много еще чего
-
-На самом деле в проекте еще много недоделок, которые хотелось бы довести до ума:
-- фильтрация, пагинация, сортировка в апи
-- аутентификация / авторизация апи
-- логгирование
-- админка
-- внутренняя документация (докстринги)
-- тесты (смоук, интеграционные)
-- почистить ненужные фичи унаследованные от cookiecutter-django
-- поменять менеджер пакетов (спорно на самом деле)
-
-Но к сожалению я уже сильно вышел из лимита 4-ех часов о которых говорится в описании тестового задания.
-Возможно позже я таки вернусь к проекту и доделаю его, но пока что придется довольствоваться тем что есть =)
-
-Очень расчитываю на фидбек, особенно если найдутся совсем жесткие косяки.
