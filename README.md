@@ -9,6 +9,13 @@ This is my solution for the test assignment I haven't even got a feedback on...
 
 License: MIT
 
+## Features
+The service is meant to be used via rest API, although having an internal django admin.
+The description of the API can be found in 'api/docs/' of the running service.
+
+In addition to providing an API, the service performs some periodic tasks.
+Please take a look at [Creating default task schedules](#creating-default-task-schedules)
+
 ## Settings
 
 ### General
